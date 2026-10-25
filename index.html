@@ -88,6 +88,7 @@ button.wrong { background: var(--ko-bg); border: 3px dashed var(--ko-border); }
     <h1>Résultats</h1>
     <p class="big" id="final-score" tabindex="-1"></p>
     <p id="final-msg"></p>
+    <button id="replay" class="next" type="button">Rejouer</button>
   </section>
 </main>
 <script>
@@ -149,6 +150,12 @@ $("next").addEventListener("click", () => {
   $("final-score").textContent = `${score} / ${n}`;
   $("final-msg").textContent = score === n ? "Parfait, mission accomplie!" : score >= 3 ? "Bon travail, belle trajectoire!" : "Décollage réussi, la prochaine mission ira plus loin!";
   $("final-score").focus();
+});
+$("replay").addEventListener("click", () => {
+  i = 0; score = 0; answered = false;
+  $("final-score").textContent = ""; $("final-msg").textContent = "";
+  $("results").hidden = true; $("quiz").hidden = false;
+  show();
 });
 show();
 </script>
