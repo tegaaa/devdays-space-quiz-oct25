@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz : exploration spatiale</title>
+<style>
+:root {
+  --bg: #f5f7fb; --card: #ffffff; --text: #0b1020; --muted: #3a4560;
+  --border: #1b2a55; --accent: #1d3fbf; --on-accent: #ffffff;
+  --ok-bg: #d6f5de; --ok-border: #0a6b2a; --ko-bg: #fbdcdc; --ko-border: #a30f0f;
+  --focus: #b35900;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #070b18; --card: #111933; --text: #f4f6ff; --muted: #c3cbe6;
+    --border: #8fa4ff; --accent: #8fb0ff; --on-accent: #070b18;
+    --ok-bg: #0f3d1f; --ok-border: #6ee79a; --ko-bg: #4a1414; --ko-border: #ff8f8f;
+    --focus: #ffd24d;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+  background: var(--bg); color: var(--text);
+  font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main {
+  position: relative; width: 100%; max-width: 860px; padding: 40px 32px 32px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 31px, color-mix(in srgb, var(--border) 18%, transparent) 31px 32px),
+    repeating-linear-gradient(90deg, transparent 0 31px, color-mix(in srgb, var(--border) 18%, transparent) 31px 32px),
+    var(--card);
+  border: 4px solid var(--border); border-radius: 6px;
+  box-shadow: inset 0 0 0 4px var(--card), inset 0 0 0 6px var(--border), 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+main::before {
+  content: "● MISSION CONTROL — LIAISON ACTIVE";
+  position: absolute; top: 14px; left: 20px; right: 20px;
+  font: 700 .6rem/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em;
+  color: var(--muted); border-bottom: 2px solid var(--border); padding-bottom: 6px;
+}
+main::after {
+  content: ""; position: absolute; top: 12px; right: 22px; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--ok-border); box-shadow: 0 0 8px var(--ok-border);
+}
+.meta { font-family: ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .06em; }
+h1 { font-size: 1.6rem; margin: 0 0 8px; }
+h2 { font-size: 1.4rem; margin: 0 0 20px; }
+.meta { display: flex; justify-content: space-between; gap: 16px; font-weight: 700; margin-bottom: 8px; }
+progress { width: 100%; height: 14px; margin-bottom: 24px; accent-color: var(--accent); }
+ul { list-style: none; padding: 0; margin: 0 0 20px; display: grid; gap: 12px; }
+button {
+  font: inherit; cursor: pointer; color: var(--text); background: var(--card);
+  border: 2px solid var(--border); border-radius: 10px; padding: 12px 16px;
+  width: 100%; text-align: left; display: flex; gap: 12px; align-items: center;
+}
+button:hover:not(:disabled) { border-color: var(--accent); background: var(--bg); }
+button:disabled { cursor: default; }
+:focus-visible { outline: 4px solid var(--focus); outline-offset: 3px; }
+button.correct { background: var(--ok-bg); border: 3px solid var(--ok-border); font-weight: 700; }
+button.wrong { background: var(--ko-bg); border: 3px dashed var(--ko-border); }
+.mark { font-weight: 800; margin-left: auto; }
+#feedback { min-height: 2em; font-weight: 700; margin-bottom: 16px; }
+.next { background: var(--accent); color: var(--on-accent); border-color: var(--accent); justify-content: center; font-weight: 700; }
+.next:hover:not(:disabled) { background: var(--accent); filter: brightness(1.1); }
+.big { font-size: 3rem; font-weight: 800; margin: 8px 0; }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: no-preference) {
+  button { transition: background .2s, border-color .2s; }
+  main { animation: in .4s ease-out; }
+  @keyframes in { from { opacity: 0; transform: translateY(8px); } }
+}
+</style>
+</head>
+<body>
+<main>
+  <section id="quiz">
+    <h1>Quiz : exploration spatiale</h1>
+    <div class="meta"><span id="progress-text"></span><span id="score" aria-live="off"></span></div>
+    <progress id="bar" max="5" value="0" aria-label="Progression du quiz"></progress>
+    <h2 id="question" tabindex="-1"></h2>
+    <ul id="answers"></ul>
+    <div id="feedback" role="status" aria-live="polite"></div>
+    <button id="next" class="next" hidden></button>
+  </section>
+  <section id="results" hidden>
+    <h1>Résultats</h1>
+    <p class="big" id="final-score" tabindex="-1"></p>
+    <p id="final-msg"></p>
+  </section>
+</main>
+<script>
+const QUESTIONS = [
+  { q: "Quelle planète est surnommée la planète rouge?", a: ["Vénus", "Mars", "Jupiter", "Mercure"], c: 1 },
+  { q: "Qui a été le premier humain à voyager dans l’espace, en 1961?", a: ["Neil Armstrong", "Buzz Aldrin", "Youri Gagarine", "Alan Shepard"], c: 2 },
+  { q: "Quelle mission a posé les premiers humains sur la Lune en 1969?", a: ["Apollo 11", "Apollo 13", "Gemini 4", "Soyouz 1"], c: 0 },
+  { q: "Quel télescope spatial, lancé en décembre 2021, observe surtout l’infrarouge?", a: ["Hubble", "James Webb", "Kepler", "Chandra"], c: 1 },
+  { q: "Quelle station spatiale est occupée en continu par des équipages depuis novembre 2000?", a: ["Mir", "Skylab", "Tiangong", "ISS"], c: 3 }
+];
+const $ = id => document.getElementById(id);
+let i = 0, score = 0, answered = false;
+
+function show() {
+  const item = QUESTIONS[i]; answered = false;
+  $("progress-text").textContent = `Question ${i + 1} sur ${QUESTIONS.length}`;
+  $("score").textContent = `Score : ${score}`;
+  $("bar").value = i;
+  $("question").textContent = item.q;
+  $("feedback").textContent = "";
+  $("next").hidden = true;
+  const ul = $("answers"); ul.innerHTML = "";
+  item.a.forEach((t, k) => {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span>${"ABCD"[k]}.</span><span></span><span class="mark"></span>`;
+    b.children[1].textContent = t;
+    b.addEventListener("click", () => choose(k));
+    li.appendChild(b); ul.appendChild(li);
+  });
+  $("question").focus();
+}
+
+function choose(k) {
+  if (answered) return;
+  answered = true;
+  const item = QUESTIONS[i];
+  const ok = k === item.c;
+  if (ok) score++;
+  [...$("answers").querySelectorAll("button")].forEach((b, n) => {
+    b.disabled = true;
+    const mark = b.querySelector(".mark");
+    if (n === item.c) { b.classList.add("correct"); mark.textContent = "✔ Bonne réponse"; }
+    else if (n === k) { b.classList.add("wrong"); mark.textContent = "✘ Mauvaise réponse"; }
+  });
+  $("score").textContent = `Score : ${score}`;
+  $("bar").value = i + 1;
+  $("feedback").textContent = ok ? "✔ Bravo, c’est correct!" : `✘ Incorrect. La bonne réponse : ${item.a[item.c]}.`;
+  const next = $("next");
+  next.textContent = i === QUESTIONS.length - 1 ? "Voir les résultats" : "Question suivante";
+  next.hidden = false; next.focus();
+}
+
+$("next").addEventListener("click", () => {
+  if (i < QUESTIONS.length - 1) { i++; show(); return; }
+  $("quiz").hidden = true; $("results").hidden = false;
+  const n = QUESTIONS.length;
+  $("final-score").textContent = `${score} / ${n}`;
+  $("final-msg").textContent = score === n ? "Parfait, mission accomplie!" : score >= 3 ? "Bon travail, belle trajectoire!" : "Décollage réussi, la prochaine mission ira plus loin!";
+  $("final-score").focus();
+});
+show();
+</script>
+</body>
+</html>
