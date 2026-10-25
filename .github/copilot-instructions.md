@@ -23,4 +23,5 @@ None. There is no build step, package manager, test runner or linter. Open `inde
 - Presentation targets a projector: base font about 20px, high contrast, visible `:focus-visible` outline. Colors come from CSS custom properties in `:root`, overridden under `prefers-color-scheme: dark`; add new colors to both themes.
 - Animations and transitions live only inside `@media (prefers-reduced-motion: no-preference)`.
 - The `main` panel has a "mission control" look (grid background, header label via `main::before`); the quiz logic is independent from it.
-- Out of scope for this version: timer, leaderboard, score persistence, replay button.
+- Out of scope for this version: timer, leaderboard, score persistence.
+- The results screen has a `#replay` button; `replay` handler resets `i`, `score`, `answered`, swaps sections and calls `show()` (focus lands on `h2#question`).
